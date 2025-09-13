@@ -42,7 +42,7 @@ const App = () => (
                     <AppSidebar />
                     <main className="flex-1">
                       <Routes>
-                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="dashboard" element={<AdminDashboardRedesigned />} />
                         <Route path="tasks" element={<AdminTasks />} />
                         <Route path="services" element={<AdminServices />} />
                         <Route path="email" element={<AdminEmail />} />
