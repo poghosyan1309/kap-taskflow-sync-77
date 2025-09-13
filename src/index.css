@@ -8,79 +8,79 @@
 @layer base {
   :root {
     /* Enterprise Design System - Kapan Mining Company */
-    --background: 249 250 251; /* #F9FAFB - light gray */
-    --foreground: 17 24 39; /* #111827 - dark gray */
+    --background: 210 20% 98%; /* light gray */
+    --foreground: 216 50% 12%; /* dark gray */
 
-    --card: 255 255 255; /* #FFFFFF - white */
-    --card-foreground: 17 24 39; /* #111827 */
+    --card: 0 0% 100%; /* white */
+    --card-foreground: 216 50% 12%;
 
-    --popover: 255 255 255; /* #FFFFFF */
-    --popover-foreground: 17 24 39; /* #111827 */
+    --popover: 0 0% 100%;
+    --popover-foreground: 216 50% 12%;
 
     /* Corporate Color Palette */
-    --primary: 30 58 138; /* #1E3A8A - deep blue */
-    --primary-foreground: 255 255 255; /* #FFFFFF */
-    --primary-light: 59 130 246; /* #3B82F6 - lighter blue */
-    --primary-dark: 15 23 42; /* #0F172A - darker blue */
+    --primary: 219 67% 27%; /* deep blue */
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 217 91% 60%; /* lighter blue */
+    --primary-dark: 227 57% 11%; /* darker blue */
 
     /* Accent Colors */
-    --accent-green: 16 185 129; /* #10B981 - success green */
-    --accent-green-light: 52 211 153; /* #34D399 */
-    --accent-amber: 245 158 11; /* #F59E0B - warning amber */
-    --accent-amber-light: 251 191 36; /* #FBBF24 */
-    --accent-red: 239 68 68; /* #EF4444 - error red */
-    --accent-red-light: 248 113 113; /* #F87171 */
+    --accent-green: 160 84% 39%; /* success green */
+    --accent-green-light: 160 68% 52%;
+    --accent-amber: 35 92% 49%; /* warning amber */
+    --accent-amber-light: 41 96% 56%;
+    --accent-red: 0 72% 61%; /* error red */
+    --accent-red-light: 0 91% 71%;
 
     /* Admin Theme - Deep Blue */
-    --admin-primary: 30 58 138; /* #1E3A8A */
-    --admin-secondary: 59 130 246; /* #3B82F6 */
-    --admin-accent: 16 185 129; /* #10B981 */
-    --admin-surface: 241 245 249; /* #F1F5F9 */
-    --admin-glow: 59 130 246; /* #3B82F6 */
+    --admin-primary: 219 67% 27%;
+    --admin-secondary: 217 91% 60%;
+    --admin-accent: 160 84% 39%;
+    --admin-surface: 210 40% 96%;
+    --admin-glow: 217 91% 60%;
     
     /* Service Theme - Emerald Green */
-    --service-primary: 16 185 129; /* #10B981 */
-    --service-secondary: 52 211 153; /* #34D399 */
-    --service-accent: 34 197 94; /* #22C55E */
-    --service-surface: 240 253 244; /* #F0FDF4 */
-    --service-glow: 52 211 153; /* #34D399 */
+    --service-primary: 160 84% 39%;
+    --service-secondary: 160 68% 52%;
+    --service-accent: 142 71% 45%;
+    --service-surface: 138 76% 97%;
+    --service-glow: 160 68% 52%;
 
     /* Status Colors */
-    --status-pending: 245 158 11; /* #F59E0B - amber */
-    --status-in-progress: 59 130 246; /* #3B82F6 - blue */
-    --status-completed: 16 185 129; /* #10B981 - green */
-    --status-overdue: 239 68 68; /* #EF4444 - red */
-    --status-pending-glow: 251 191 36; /* #FBBF24 */
-    --status-completed-glow: 52 211 153; /* #34D399 */
+    --status-pending: 35 92% 49%; /* amber */
+    --status-in-progress: 217 91% 60%; /* blue */
+    --status-completed: 160 84% 39%; /* green */
+    --status-overdue: 0 72% 61%; /* red */
+    --status-pending-glow: 41 96% 56%;
+    --status-completed-glow: 160 68% 52%;
 
     /* Neutral Colors */
-    --secondary: 107 114 128; /* #6B7280 - gray-500 */
-    --secondary-foreground: 255 255 255; /* #FFFFFF */
+    --secondary: 220 9% 46%; /* gray-500 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 243 244 246; /* #F3F4F6 - gray-100 */
-    --muted-foreground: 107 114 128; /* #6B7280 - gray-500 */
+    --muted: 220 14% 96%; /* gray-100 */
+    --muted-foreground: 220 9% 46%; /* gray-500 */
 
-    --accent: 16 185 129; /* #10B981 - green accent */
-    --accent-foreground: 255 255 255; /* #FFFFFF */
+    --accent: 160 84% 39%; /* green accent */
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 239 68 68; /* #EF4444 - red */
-    --destructive-foreground: 255 255 255; /* #FFFFFF */
+    --destructive: 0 72% 61%; /* red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 229 231 235; /* #E5E7EB - gray-200 */
-    --input: 255 255 255; /* #FFFFFF */
-    --ring: 30 58 138; /* #1E3A8A - primary blue */
+    --border: 214 32% 91%; /* gray-200 */
+    --input: 0 0% 100%;
+    --ring: 219 67% 27%; /* primary blue */
 
     --radius: 1rem; /* 16px - 2xl rounded corners */
 
     /* Sidebar Colors */
-    --sidebar-background: 255 255 255; /* #FFFFFF */
-    --sidebar-foreground: 17 24 39; /* #111827 */
-    --sidebar-primary: 30 58 138; /* #1E3A8A */
-    --sidebar-primary-foreground: 255 255 255; /* #FFFFFF */
-    --sidebar-accent: 241 245 249; /* #F1F5F9 */
-    --sidebar-accent-foreground: 17 24 39; /* #111827 */
-    --sidebar-border: 229 231 235; /* #E5E7EB */
-    --sidebar-ring: 30 58 138; /* #1E3A8A */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 216 50% 12%;
+    --sidebar-primary: 219 67% 27%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 216 50% 12%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 219 67% 27%;
 
     /* Typography Scale */
 
@@ -110,42 +110,42 @@
   }
 
   .dark {
-    --background: 15 23 42; /* slate-900 */
-    --foreground: 248 250 252; /* slate-50 */
+    --background: 227 57% 11%; /* slate-900 */
+    --foreground: 210 40% 98%; /* slate-50 */
     
-    --card: 30 41 59; /* slate-800 */
-    --card-foreground: 248 250 252; /* slate-50 */
+    --card: 217 33% 17%; /* slate-800 */
+    --card-foreground: 210 40% 98%; /* slate-50 */
     
-    --popover: 30 41 59; /* slate-800 */
-    --popover-foreground: 248 250 252; /* slate-50 */
+    --popover: 217 33% 17%; /* slate-800 */
+    --popover-foreground: 210 40% 98%; /* slate-50 */
     
-    --primary: 59 130 246; /* blue-500 */
-    --primary-foreground: 15 23 42; /* slate-900 */
+    --primary: 217 91% 60%; /* blue-500 */
+    --primary-foreground: 227 57% 11%; /* slate-900 */
     
-    --secondary: 51 65 85; /* slate-700 */
-    --secondary-foreground: 248 250 252; /* slate-50 */
+    --secondary: 215 20% 28%; /* slate-700 */
+    --secondary-foreground: 210 40% 98%; /* slate-50 */
     
-    --muted: 51 65 85; /* slate-700 */
-    --muted-foreground: 148 163 184; /* slate-400 */
+    --muted: 215 20% 28%; /* slate-700 */
+    --muted-foreground: 215 16% 57%; /* slate-400 */
     
-    --accent: 51 65 85; /* slate-700 */
-    --accent-foreground: 248 250 252; /* slate-50 */
+    --accent: 215 20% 28%; /* slate-700 */
+    --accent-foreground: 210 40% 98%; /* slate-50 */
     
-    --destructive: 239 68 68; /* red-500 */
-    --destructive-foreground: 248 250 252; /* slate-50 */
+    --destructive: 0 72% 61%; /* red-500 */
+    --destructive-foreground: 210 40% 98%; /* slate-50 */
     
-    --border: 51 65 85; /* slate-700 */
-    --input: 51 65 85; /* slate-700 */
-    --ring: 59 130 246; /* blue-500 */
+    --border: 215 20% 28%; /* slate-700 */
+    --input: 215 20% 28%; /* slate-700 */
+    --ring: 217 91% 60%; /* blue-500 */
 
-    --sidebar-background: 30 41 59; /* slate-800 */
-    --sidebar-foreground: 248 250 252; /* slate-50 */
-    --sidebar-primary: 59 130 246; /* blue-500 */
-    --sidebar-primary-foreground: 15 23 42; /* slate-900 */
-    --sidebar-accent: 51 65 85; /* slate-700 */
-    --sidebar-accent-foreground: 248 250 252; /* slate-50 */
-    --sidebar-border: 51 65 85; /* slate-700 */
-    --sidebar-ring: 59 130 246; /* blue-500 */
+    --sidebar-background: 217 33% 17%; /* slate-800 */
+    --sidebar-foreground: 210 40% 98%; /* slate-50 */
+    --sidebar-primary: 217 91% 60%; /* blue-500 */
+    --sidebar-primary-foreground: 227 57% 11%; /* slate-900 */
+    --sidebar-accent: 215 20% 28%; /* slate-700 */
+    --sidebar-accent-foreground: 210 40% 98%; /* slate-50 */
+    --sidebar-border: 215 20% 28%; /* slate-700 */
+    --sidebar-ring: 217 91% 60%; /* blue-500 */
   }
 }
 
