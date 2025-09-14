@@ -10,6 +10,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthGuard } from "@/components/AuthGuard";
 
 const ServiceDashboard = () => {
   const { serviceId } = useParams();
@@ -77,7 +78,8 @@ const ServiceDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthGuard redirectTo="/service/login">
+      <div className="min-h-screen bg-gray-50">
       <ServiceHeader />
       
       <main className="container mx-auto px-6 py-8">
@@ -244,7 +246,8 @@ const ServiceDashboard = () => {
           ))}
         </div>
       </main>
-    </div>
+      </div>
+    </AuthGuard>
   );
 };
 

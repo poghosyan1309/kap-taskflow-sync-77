@@ -7,20 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Users, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const ServiceLogin = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [credentials, setCredentials] = useState({
-    service: "",
+    email: "",
     password: ""
   });
-
-  const services = [
-    { value: "geology", label: "Երկրաբանական ծառայություն" },
-    { value: "geomech", label: "Երկրամեխանիկական բաժին" },
-    { value: "survey", label: "Մարկշեյդերական ծառայություն" },
-    { value: "drilling", label: "Փոր-պայթյունային բաժին" },
-  ];
 
   useEffect(() => {
     document.title = "Ծառայության մուտք | Կապանի ԱՄԿ";
@@ -41,15 +36,42 @@ const ServiceLogin = () => {
     link.href = window.location.href;
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     
-    if (credentials.service && credentials.password === "password123") {
-      const selectedService = services.find(s => s.value === credentials.service);
-      toast.success(`Բարի գալուստ, ${selectedService?.label}!`);
-      navigate(`/service/dashboard/${credentials.service}`);
-    } else {
-      toast.error("Սխալ տվյալներ");
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (error) throw error;
+
+      // For now, we'll derive the service from the email domain
+      // In production, this would come from the database
+      const emailParts = credentials.email.split('@');
+      const serviceMappings: Record<string, string> = {
+        'geology': 'geology',
+        'geomech': 'geomech',
+        'survey': 'survey',
+        'drilling': 'drilling'
+      };
+      
+      let serviceId = 'geology'; // default
+      for (const [key, value] of Object.entries(serviceMappings)) {
+        if (emailParts[0].includes(key)) {
+          serviceId = value;
+          break;
+        }
+      }
+
+      toast.success(`Բարի գալուստ!`);
+      navigate(`/service/dashboard/${serviceId}`);
+    } catch (error: any) {
+      toast.error(error.message || "Մուտքի սխալ");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,21 +92,19 @@ const ServiceLogin = () => {
 
             <form onSubmit={handleLogin} className="space-y-6">
               <div>
-                <Label className="text-sm font-medium">
-                  Ընտրեք ծառայությունը
+                <Label htmlFor="email" className="text-sm font-medium">
+                  Էլ. փոստ
                 </Label>
-                <Select onValueChange={(value) => setCredentials({...credentials, service: value})}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Երկրամեխանիկական բաժին" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((service) => (
-                      <SelectItem key={service.value} value={service.value}>
-                        {service.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  id="email"
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+                  className="mt-2"
+                  placeholder="email@example.com"
+                  required
+                  disabled={loading}
+                />
               </div>
 
               <div>
@@ -98,14 +118,17 @@ const ServiceLogin = () => {
                   onChange={(e) => setCredentials({...credentials, password: e.target.value})}
                   className="mt-2"
                   placeholder="••••••••"
+                  required
+                  disabled={loading}
                 />
               </div>
 
               <Button 
                 type="submit"
                 className="w-full h-11 text-base font-semibold"
+                disabled={loading}
               >
-                Մուտք
+                {loading ? "Մուտք է գործում..." : "Մուտք"}
               </Button>
             </form>
 
@@ -113,6 +136,7 @@ const ServiceLogin = () => {
               variant="secondary"
               onClick={() => navigate('/')}
               className="w-full mt-2"
+              disabled={loading}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Վերադառնալ գլխավոր էջ
