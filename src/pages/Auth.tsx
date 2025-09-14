@@ -102,12 +102,22 @@ const Auth = () => {
 
       if (error) {
         if (error.message.includes("already registered")) {
-          toast.error("Пользователь с таким email уже существует");
+          toast.error("Այս էլ․ փոստով օգտատեր արդեն գոյություն ունի");
         } else {
-          toast.error(`Ошибка регистрации: ${error.message}`);
+          toast.error(`Գրանցման սխալ: ${error.message}`);
         }
       } else {
-        toast.success("Проверьте email для подтверждения регистрации");
+        toast.success("Գրանցումը հաջողությամբ ավարտվեց");
+        // Automatically sign in after successful signup
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
+        
+        if (!signInError) {
+          toast.success("Բարի գալուստ!");
+          navigate('/admin/dashboard');
+        }
       }
     } catch (error) {
       toast.error("Произошла ошибка при регистрации");
