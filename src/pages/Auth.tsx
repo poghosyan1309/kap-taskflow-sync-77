@@ -16,11 +16,9 @@ const Auth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [credentials, setCredentials] = useState({
     email: "",
-    password: "",
-    confirmPassword: ""
+    password: ""
   });
 
   useEffect(() => {
@@ -74,57 +72,6 @@ const Auth = () => {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (credentials.password !== credentials.confirmPassword) {
-      toast.error("Пароли не совпадают");
-      return;
-    }
-
-    if (credentials.password.length < 6) {
-      toast.error("Пароль должен содержать минимум 6 символов");
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-
-      if (error) {
-        if (error.message.includes("already registered")) {
-          toast.error("Այս էլ․ փոստով օգտատեր արդեն գոյություն ունի");
-        } else {
-          toast.error(`Գրանցման սխալ: ${error.message}`);
-        }
-      } else {
-        toast.success("Գրանցումը հաջողությամբ ավարտվեց");
-        // Automatically sign in after successful signup
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        });
-        
-        if (!signInError) {
-          toast.success("Բարի գալուստ!");
-          navigate('/admin/dashboard');
-        }
-      }
-    } catch (error) {
-      toast.error("Произошла ошибка при регистрации");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (user) {
     return (
@@ -158,187 +105,76 @@ const Auth = () => {
               <p className="text-muted-foreground">Կապանի ԱՄԿ</p>
             </div>
 
-            <Tabs defaultValue="login" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2 bg-muted/50 backdrop-blur-sm">
-                <TabsTrigger 
-                  value="login" 
-                  className="text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-200"
-                >
-                  Մուտք
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="signup" 
-                  className="text-muted-foreground data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all duration-200"
-                >
-                  Գրանցում
-                </TabsTrigger>
-              </TabsList>
+            {/* Login Form Only */}
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="bg-muted/30 border border-border rounded-lg p-4 mb-6">
+                <p className="text-sm text-muted-foreground text-center">
+                  <strong>Նշում:</strong> Բոլոր օգտատերերը գրանցվում են միայն ադմինիստրատորի կողմից SQL-ի միջոցով
+                </p>
+              </div>
 
-              <TabsContent value="login" className="space-y-6">
-                <form onSubmit={handleLogin} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-admin-primary" />
-                      Էլ․ փոստի հասցե
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={credentials.email}
-                      onChange={(e) => setCredentials({...credentials, email: e.target.value})}
-                      className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 transition-all duration-200"
-                      placeholder="admin@kapan.com"
-                      required
-                    />
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-foreground font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-admin-primary" />
+                  Էլ․ փոստի հասցե
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={credentials.email}
+                  onChange={(e) => setCredentials({...credentials, email: e.target.value})}
+                  className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 transition-all duration-200"
+                  placeholder="admin@kapan.com"
+                  required
+                />
+              </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="text-foreground font-medium flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-admin-primary" />
-                      Գաղտնաբառ
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? "text" : "password"}
-                        value={credentials.password}
-                        onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                        className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 pr-10 transition-all duration-200"
-                        placeholder="••••••••"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-admin-primary hover:bg-admin-secondary text-white font-semibold text-base shadow-lg hover:shadow-admin-glow transition-all duration-300 disabled:opacity-50"
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground font-medium flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-admin-primary" />
+                  Գաղտնաբառ
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={credentials.password}
+                    onChange={(e) => setCredentials({...credentials, password: e.target.value})}
+                    className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 pr-10 transition-all duration-200"
+                    placeholder="••••••••"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
                   >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                        Գործընթացում...
-                      </div>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      "Մուտք գործել"
+                      <Eye className="h-4 w-4 text-muted-foreground" />
                     )}
                   </Button>
-                </form>
-              </TabsContent>
+                </div>
+              </div>
 
-              <TabsContent value="signup" className="space-y-6">
-                <form onSubmit={handleSignUp} className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email" className="text-foreground font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-admin-primary" />
-                      Էլ․ փոստի հասցե
-                    </Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      value={credentials.email}
-                      onChange={(e) => setCredentials({...credentials, email: e.target.value})}
-                      className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 transition-all duration-200"
-                      placeholder="admin@kapan.com"
-                      required
-                    />
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="w-full h-12 bg-admin-primary hover:bg-admin-secondary text-white font-semibold text-base shadow-lg hover:shadow-admin-glow transition-all duration-300 disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    Գործընթացում...
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password" className="text-foreground font-medium flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-admin-primary" />
-                      Գաղտնաբառ
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showPassword ? "text" : "password"}
-                        value={credentials.password}
-                        onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                        className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 pr-10 transition-all duration-200"
-                        placeholder="••••••••"
-                        required
-                        minLength={6}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password" className="text-foreground font-medium flex items-center gap-2">
-                      <Lock className="h-4 w-4 text-admin-primary" />
-                      Հաստատել գաղտնաբառը
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="confirm-password"
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={credentials.confirmPassword}
-                        onChange={(e) => setCredentials({...credentials, confirmPassword: e.target.value})}
-                        className="bg-background border-border focus:border-admin-primary focus:ring-admin-primary/20 pr-10 transition-all duration-200"
-                        placeholder="••••••••"
-                        required
-                        minLength={6}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-transparent"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-admin-primary hover:bg-admin-secondary text-white font-semibold text-base shadow-lg hover:shadow-admin-glow transition-all duration-300 disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                        Գրանցում...
-                      </div>
-                    ) : (
-                      "Գրանցվել"
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                ) : (
+                  "Մուտք գործել"
+                )}
+              </Button>
+            </form>
 
             <Button
               variant="ghost"
