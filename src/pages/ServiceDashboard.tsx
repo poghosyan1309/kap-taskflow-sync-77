@@ -14,9 +14,18 @@ import { AuthGuard } from "@/components/AuthGuard";
 
 const ServiceDashboard = () => {
   const { serviceId } = useParams();
+  const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState("all");
   const [taskComment, setTaskComment] = useState("");
   const [taskStatus, setTaskStatus] = useState("");
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    completed: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   const serviceNames = {
     geology: "Геологическая служба",
@@ -27,36 +36,163 @@ const ServiceDashboard = () => {
 
   const serviceName = serviceNames[serviceId as keyof typeof serviceNames] || "Служба";
 
-  const tasks = [
-    {
-      id: 1,
-      title: "Провести анализ устойчивости",
-      description: "Анализ устойчивости бортов карьера в зоне А. Особое внимание уделить северному борту.",
-      status: "in-progress",
-      priority: "Высокий",
-      deadline: "07.09.2025",
-      assignedDate: "07.09.2025"
+  useEffect(() => {
+    fetchTasks();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('service-tasks')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          fetchTasks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [serviceId, activeFilter]);
+
+  const fetchTasks = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Build query based on service and filter
+      let query = supabase
+        .from('tasks')
+        .select(`
+          *,
+          services (
+            name,
+            email
+          ),
+          task_comments (
+            id,
+            comment,
+            created_at,
+            user_id
+          ),
+          task_files (
+            id,
+            file_name,
+            file_url
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      // Filter by service if specific service is selected
+      if (serviceId && serviceId !== 'all') {
+        const { data: serviceData } = await supabase
+          .from('services')
+          .select('id')
+          .ilike('name', `%${serviceName}%`)
+          .single();
+        
+        if (serviceData) {
+          query = query.eq('service_id', serviceData.id);
+        }
+      }
+
+      // Apply status filter
+      if (activeFilter !== 'all') {
+        const statusMap: Record<string, string> = {
+          'pending': 'pending',
+          'in-progress': 'in_progress',
+          'completed': 'completed'
+        };
+        query = query.eq('status', statusMap[activeFilter]);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        toast.error('Չհաջողվեց բեռնել առաջադրանքները');
+        return;
+      }
+
+      const formattedTasks = (data || []).map(task => ({
+        ...task,
+        status: task.status === 'in_progress' ? 'in-progress' : task.status,
+        priority: task.priority === 'urgent' ? 'Շտապ' : 
+                  task.priority === 'high' ? 'Բարձր' :
+                  task.priority === 'medium' ? 'Միջին' : 'Ցածր'
+      }));
+
+      setTasks(formattedTasks);
+
+      // Calculate stats
+      const total = formattedTasks.length;
+      const pending = formattedTasks.filter(t => t.status === 'pending').length;
+      const inProgress = formattedTasks.filter(t => t.status === 'in-progress').length;
+      const completed = formattedTasks.filter(t => t.status === 'completed').length;
+
+      setStats({ total, pending, inProgress, completed });
+    } catch (err) {
+      console.error('Error in fetchTasks:', err);
+      toast.error('Տվյալները բեռնելու սխալ');
+    } finally {
+      setIsLoading(false);
     }
-  ];
-
-  const stats = {
-    total: 1,
-    pending: 0,
-    inProgress: 1, 
-    completed: 0
   };
 
-  const handleStatusUpdate = (taskId: number, newStatus: string) => {
-    toast.success("Статус задачи обновлен");
+  const handleStatusUpdate = async (taskId: string, newStatus: string) => {
+    try {
+      const statusMap: Record<string, string> = {
+        'pending': 'pending',
+        'in-progress': 'in_progress',
+        'completed': 'completed'
+      };
+
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: statusMap[newStatus],
+          completed_at: newStatus === 'completed' ? new Date().toISOString() : null
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      toast.success("Առաջադրանքի կարգավիճակը թարմացված է");
+      fetchTasks();
+    } catch (err) {
+      console.error('Error updating task status:', err);
+      toast.error("Չհաջողվեց թարմացնել կարգավիճակը");
+    }
   };
 
-  const handleCommentSubmit = (taskId: number) => {
+  const handleCommentSubmit = async (taskId: string) => {
     if (!taskComment.trim()) {
-      toast.error("Введите комментарий");
+      toast.error("Մուտքագրեք մեկնաբանություն");
       return;
     }
-    toast.success("Комментарий добавлен");
-    setTaskComment("");
+
+    if (!user) {
+      toast.error("Պետք է մուտք գործել");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('task_comments')
+        .insert({
+          task_id: taskId,
+          user_id: user.id,
+          comment: taskComment
+        });
+
+      if (error) throw error;
+
+      toast.success("Մեկնաբանությունը ավելացված է");
+      setTaskComment("");
+      fetchTasks();
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      toast.error("Չհաջողվեց ավելացնել մեկնաբանություն");
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -70,12 +206,28 @@ const ServiceDashboard = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'pending': return 'Ожидает';
-      case 'in-progress': return 'В работе';
-      case 'completed': return 'Выполнено';
-      default: return 'Неизвестно';
+      case 'pending': return 'Սպասում է';
+      case 'in-progress': return 'Ընթացքում';
+      case 'completed': return 'Կատարված';
+      default: return 'Անհայտ';
     }
   };
+
+  if (isLoading) {
+    return (
+      <AuthGuard redirectTo="/service/login">
+        <div className="min-h-screen bg-gray-50">
+          <ServiceHeader />
+          <main className="container mx-auto px-6 py-8">
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2 text-gray-600">Բեռնվում է...</p>
+            </div>
+          </main>
+        </div>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard redirectTo="/service/login">
@@ -88,19 +240,19 @@ const ServiceDashboard = () => {
           <div className="grid grid-cols-4 gap-6 text-center">
             <div>
               <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
-              <div className="text-sm text-gray-600">Всего задач</div>
+              <div className="text-sm text-gray-600">Ընդամենը առաջադրանքներ</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-orange-600">{stats.pending}</div>
-              <div className="text-sm text-gray-600">Ожидают</div>
+              <div className="text-sm text-gray-600">Սպասում են</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-blue-600">{stats.inProgress}</div>
-              <div className="text-sm text-gray-600">В работе</div>
+              <div className="text-sm text-gray-600">Ընթացքում</div>
             </div>
             <div>
               <div className="text-3xl font-bold text-green-600">{stats.completed}</div>
-              <div className="text-sm text-gray-600">Выполнено</div>
+              <div className="text-sm text-gray-600">Կատարված</div>
             </div>
           </div>
         </div>
@@ -113,140 +265,146 @@ const ServiceDashboard = () => {
               onClick={() => setActiveFilter("all")}
               className={activeFilter === "all" ? "bg-service-primary" : ""}
             >
-              Все
+              Բոլորը
             </Button>
             <Button 
               variant={activeFilter === "pending" ? "default" : "outline"}
               onClick={() => setActiveFilter("pending")}
-              className={activeFilter === "pending" ? "bg-service-primary" : ""}
+              className={activeFilter === "pending" ? "bg-orange-600" : ""}
             >
-              Ожидают
+              Սպասում են
             </Button>
             <Button 
               variant={activeFilter === "in-progress" ? "default" : "outline"}
               onClick={() => setActiveFilter("in-progress")}
-              className={activeFilter === "in-progress" ? "bg-service-primary" : ""}
+              className={activeFilter === "in-progress" ? "bg-blue-600" : ""}
             >
-              В работе
+              Ընթացքում
             </Button>
             <Button 
               variant={activeFilter === "completed" ? "default" : "outline"}
               onClick={() => setActiveFilter("completed")}
-              className={activeFilter === "completed" ? "bg-service-primary" : ""}
+              className={activeFilter === "completed" ? "bg-green-600" : ""}
             >
-              Выполнено
+              Կատարված
             </Button>
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Мои задачи</h2>
-
         {/* Tasks List */}
         <div className="space-y-4">
-          {tasks.map((task) => (
-            <Card key={task.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
+          {tasks.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-gray-500">Առաջադրանքներ չկան</p>
+            </Card>
+          ) : (
+            tasks.map((task) => (
+              <Card key={task.id} className="p-6 hover:shadow-lg transition-shadow">
+                <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {task.title}
-                      </h3>
+                    <h3 className="text-xl font-semibold mb-2">{task.title}</h3>
+                    <div className="flex gap-2 mb-2">
                       <Badge className={getStatusColor(task.status)}>
                         {getStatusText(task.status)}
                       </Badge>
-                      <Badge variant="destructive">
+                      <Badge variant="outline" className="border-gray-300">
                         {task.priority}
                       </Badge>
                     </div>
-                    
-                    <p className="text-gray-600 mb-4">
-                      {task.description}
-                    </p>
-                    
-                    <div className="flex items-center space-x-6 text-sm text-gray-500">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{task.deadline}</span>
-                      </div>
-                    </div>
                   </div>
-                  
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline"
-                        className="text-service-primary border-service-primary hover:bg-service-primary hover:text-white"
-                      >
-                        Открыть
+                      <Button variant="outline" size="sm">
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        Մանրամասն
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>{task.title}</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-6">
+                      <div className="space-y-4">
                         <div>
-                          <h4 className="font-medium mb-2">Описание</h4>
-                          <p className="text-gray-600">{task.description}</p>
+                          <h4 className="font-semibold mb-2">Նկարագրություն</h4>
+                          <p className="text-gray-600">{task.description || 'Նկարագրություն չկա'}</p>
                         </div>
-
-                        <div className="grid grid-cols-3 gap-4">
+                        
+                        {task.task_comments && task.task_comments.length > 0 && (
                           <div>
-                            <span className="text-sm font-medium text-gray-500">Статус</span>
-                            <Badge className={`${getStatusColor(task.status)} block mt-1`}>
-                              {getStatusText(task.status)}
-                            </Badge>
+                            <h4 className="font-semibold mb-2">Մեկնաբանություններ</h4>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                              {task.task_comments.map((comment: any) => (
+                                <div key={comment.id} className="bg-gray-50 p-3 rounded">
+                                  <p className="text-sm">{comment.comment}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(comment.created_at).toLocaleString('hy-AM')}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-500">Приоритет</span>
-                            <Badge variant="destructive" className="block mt-1">
-                              {task.priority}
-                            </Badge>
-                          </div>
-                          <div>
-                            <span className="text-sm font-medium text-gray-500">Срок выполнения</span>
-                            <p className="mt-1">{task.deadline}</p>
-                          </div>
-                        </div>
+                        )}
 
-                        <div>
-                          <h4 className="font-medium mb-2 flex items-center">
-                            <MessageSquare className="h-4 w-4 mr-2" />
-                            Вложения (0)
-                          </h4>
-                          <p className="text-gray-500 text-sm">Нет вложений</p>
-                        </div>
+                        {task.task_files && task.task_files.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold mb-2">Կցված ֆայլեր</h4>
+                            <div className="space-y-1">
+                              {task.task_files.map((file: any) => (
+                                <a 
+                                  key={file.id}
+                                  href={file.file_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-blue-600 hover:underline"
+                                >
+                                  <Paperclip className="w-4 h-4" />
+                                  {file.file_name}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                        <div>
-                          <h4 className="font-medium mb-2">Комментарии и отчеты</h4>
+                        <div className="flex gap-2">
                           <Textarea
-                            placeholder="Добавить комментарий или отчет о выполнении..."
+                            placeholder="Ավելացնել մեկնաբանություն..."
                             value={taskComment}
                             onChange={(e) => setTaskComment(e.target.value)}
+                            className="flex-1"
                           />
                           <Button 
                             onClick={() => handleCommentSubmit(task.id)}
-                            className="mt-2 bg-service-primary hover:bg-service-secondary"
+                            className="bg-service-primary hover:bg-service-dark"
                           >
-                            <Send className="h-4 w-4 mr-2" />
-                            Отправить
+                            <Send className="w-4 h-4" />
                           </Button>
-                        </div>
-
-                        <div className="text-sm text-gray-500">
-                          <p>Нет комментариев</p>
                         </div>
                       </div>
                     </DialogContent>
                   </Dialog>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <p className="text-gray-600 mb-3">{task.description || 'Նկարագրություն չկա'}</p>
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    <span>Վերջնաժամկետ: {task.deadline ? new Date(task.deadline).toLocaleDateString('hy-AM') : 'Չի նշված'}</span>
+                  </div>
+                  <select 
+                    className="border rounded px-2 py-1"
+                    value={task.status}
+                    onChange={(e) => handleStatusUpdate(task.id, e.target.value)}
+                  >
+                    <option value="pending">Սպասում է</option>
+                    <option value="in-progress">Ընթացքում</option>
+                    <option value="completed">Կատարված</option>
+                  </select>
+                </div>
+              </Card>
+            ))
+          )}
         </div>
       </main>
-      </div>
+    </div>
     </AuthGuard>
   );
 };
