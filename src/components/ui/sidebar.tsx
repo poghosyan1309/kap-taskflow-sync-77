@@ -34,7 +34,7 @@ const SidebarContext = React.createContext<SidebarContext | null>(null);
 function useSidebar() {
   const context = React.useContext(SidebarContext);
   if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider.");
+    throw new Error("useSidebar-ը պետք է օգտագործվի SidebarProvider-ի ներսում");
   }
 
   return context;

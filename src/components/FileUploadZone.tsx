@@ -39,14 +39,14 @@ const FileUploadZone = ({ onFilesUploaded, maxFiles = 10 }: FileUploadZoneProps)
 
   const processFiles = (files: File[]) => {
     if (files.length + uploadedFiles.length > maxFiles) {
-      toast.error(`Максимум ${maxFiles} файлов`);
+      toast.error(`Առավելագույնը ${maxFiles} ֆայլ`);
       return;
     }
 
     const validFiles = files.filter(file => {
       const isValid = file.size <= 10 * 1024 * 1024; // 10MB max
       if (!isValid) {
-        toast.error(`Файл ${file.name} слишком большой (макс. 10MB)`);
+        toast.error(`${file.name} ֆայլը չափազանց մեծ է (առավելագույնը 10MB)`);
       }
       return isValid;
     });
@@ -57,7 +57,7 @@ const FileUploadZone = ({ onFilesUploaded, maxFiles = 10 }: FileUploadZoneProps)
     setUploadedFiles(newFiles);
     onFilesUploaded(fileNames);
     
-    toast.success(`Загружено ${validFiles.length} файл(ов)`);
+    toast.success(`Բեռնվել է ${validFiles.length} ֆայլ`);
   };
 
   const removeFile = (index: number) => {
@@ -87,9 +87,9 @@ const FileUploadZone = ({ onFilesUploaded, maxFiles = 10 }: FileUploadZoneProps)
       >
         <Upload className="h-8 w-8 mx-auto mb-3 text-gray-400" />
         <p className="text-gray-600 mb-2">
-          Перетащите файлы сюда или{" "}
+          Քաշեք ֆայլերը այստեղ կամ{" "}
           <label className="text-primary cursor-pointer hover:underline">
-            выберите файлы
+            ընտրեք ֆայլեր
             <input
               type="file"
               multiple
@@ -100,13 +100,13 @@ const FileUploadZone = ({ onFilesUploaded, maxFiles = 10 }: FileUploadZoneProps)
           </label>
         </p>
         <p className="text-sm text-gray-500">
-          Поддерживаются: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (макс. 10MB)
+          Աջակցվում են: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG (առավելագույնը 10MB)
         </p>
       </div>
 
       {uploadedFiles.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium">Загруженные файлы:</h4>
+          <h4 className="text-sm font-medium">Բեռնված ֆայլեր:</h4>
           <div className="grid grid-cols-1 gap-2">
             {uploadedFiles.map((fileName, index) => (
               <div 

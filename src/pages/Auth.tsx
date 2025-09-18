@@ -61,12 +61,12 @@ const Auth = () => {
       });
 
       if (error) {
-        toast.error(`Ошибка входа: ${error.message}`);
+        toast.error(`Մուտքի սխալ: ${error.message}`);
       } else {
-        toast.success("Добро пожаловать!");
+        toast.success("Բարի գալուստ!");
       }
     } catch (error) {
-      toast.error("Произошла ошибка при входе");
+      toast.error("Մուտքի ժամանակ սխալ է տեղի ունեցել");
     } finally {
       setLoading(false);
     }
