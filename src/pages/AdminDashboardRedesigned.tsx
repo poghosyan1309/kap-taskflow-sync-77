@@ -79,43 +79,106 @@ const AdminDashboardRedesigned = () => {
     try {
       setIsLoading(true);
       
-      // Fetch tasks - handling the case where table might not exist
-      const { data: tasksData, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Mock data until Supabase tables are properly set up
+      const mockTasks: Task[] = [
+        {
+          id: '1',
+          title: 'Երկրաբանական հետազոտություն',
+          description: 'Հանքի հարավային հատվածի հետազոտություն',
+          status: 'completed',
+          priority: 'high',
+          service: 'geology@kapan.am',
+          created_at: new Date().toISOString(),
+          deadline: new Date(Date.now() + 86400000).toISOString(),
+          completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '2',
+          title: 'Գեոդեզիական չափումներ',
+          description: 'Արևելյան թևի չափումներ',
+          status: 'in_progress',
+          priority: 'urgent',
+          service: 'survey@kapan.am',
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+          deadline: new Date(Date.now() + 172800000).toISOString(),
+          completed_at: null,
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '3',
+          title: 'Հորատման աշխատանքներ',
+          description: 'Նոր հորատանցքի նախապատրաստում',
+          status: 'pending',
+          priority: 'medium',
+          service: 'drilling@kapan.am',
+          created_at: new Date(Date.now() - 172800000).toISOString(),
+          deadline: new Date(Date.now() + 259200000).toISOString(),
+          completed_at: null,
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '4',
+          title: 'Երկրամեխանիկական փորձարկում',
+          description: 'Ապարների ամրության փորձարկում',
+          status: 'completed',
+          priority: 'low',
+          service: 'geomech@kapan.am',
+          created_at: new Date(Date.now() - 259200000).toISOString(),
+          deadline: new Date(Date.now() - 86400000).toISOString(),
+          completed_at: new Date(Date.now() - 86400000).toISOString(),
+          updated_at: new Date().toISOString()
+        },
+        {
+          id: '5',
+          title: 'Մարկշեյդերական աշխատանք',
+          description: 'Ստորգետնյա աշխատանքների մարկշեյդերական ապահովում',
+          status: 'in_progress',
+          priority: 'high',
+          service: 'survey@kapan.am',
+          created_at: new Date(Date.now() - 432000000).toISOString(),
+          deadline: new Date(Date.now() + 432000000).toISOString(),
+          completed_at: null,
+          updated_at: new Date().toISOString()
+        }
+      ];
 
-      if (tasksError) {
-        console.log('Tasks table does not exist yet');
-        setTasks([]);
-      } else {
-        setTasks(tasksData || []);
+      const mockServices: Service[] = [
+        { id: '1', name: 'Երկրաբանություն', email: 'geology@kapan.am', description: 'Երկրաբանական հետազոտություններ', active: true },
+        { id: '2', name: 'Գեոդեզիա', email: 'survey@kapan.am', description: 'Գեոդեզիական չափումներ', active: true },
+        { id: '3', name: 'Հորատում', email: 'drilling@kapan.am', description: 'Հորատման աշխատանքներ', active: true },
+        { id: '4', name: 'Երկրամեխանիկա', email: 'geomech@kapan.am', description: 'Երկրամեխանիկական փորձարկումներ', active: true }
+      ];
+
+      // Filter tasks based on time filter
+      let filteredTasks = mockTasks;
+      if (timeFilter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        filteredTasks = mockTasks.filter(t => new Date(t.created_at) >= weekAgo);
+      } else if (timeFilter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        filteredTasks = mockTasks.filter(t => new Date(t.created_at) >= monthAgo);
       }
 
-      // Fetch services
-      const { data: servicesData, error: servicesError } = await supabase
-        .from('services')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (servicesError) {
-        console.log('Services table does not exist yet');
-        setServices([]);
-      } else {
-        setServices(servicesData || []);
-      }
-
+      setTasks(filteredTasks);
+      setServices(mockServices);
+      
       // Calculate stats
-      const taskList = tasksData || [];
-      const total = taskList.length;
-      const completed = taskList.filter((t: Task) => t.status === 'completed').length;
-      const inProgress = taskList.filter((t: Task) => t.status === 'in_progress').length;
-      const overdue = taskList.filter((t: Task) => {
+      const total = filteredTasks.length;
+      const completed = filteredTasks.filter(t => t.status === 'completed').length;
+      const inProgress = filteredTasks.filter(t => t.status === 'in_progress').length;
+      const overdue = filteredTasks.filter(t => {
         if (!t.deadline || t.status === 'completed') return false;
         return new Date(t.deadline) < new Date();
       }).length;
 
       setStats({ total, completed, inProgress, overdue });
+
+      // TODO: Replace with real Supabase data when tables are created
+      // const { data: tasksData } = await supabase.from('tasks').select('*');
+      // const { data: servicesData } = await supabase.from('services').select('*');
     } catch (err) {
       console.error('Error fetching data:', err);
       toast.error('Տվյալները բեռնելու սխալ');
