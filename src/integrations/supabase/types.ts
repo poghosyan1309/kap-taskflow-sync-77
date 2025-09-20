@@ -21,6 +21,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          role: string | null
+          service_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -29,6 +31,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          role?: string | null
+          service_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -37,9 +41,19 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          role?: string | null
+          service_id?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       services: {
         Row: {
@@ -214,7 +228,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      link_auth_user_to_profile: {
+        Args: { profile_email: string; user_email: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
